@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Chat Room</title>
+</head>
+<body>
+    <h2>Chat Room</h2>
+    <div id="chatMessages"></div>
+    <input type="text" id="messageInput">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        var socket = new SockJS('/chat-websocket');
+        var stompClient = Stomp.over(socket);
+        
+        stompClient.connect({}, function (frame) {
+            stompClient.subscribe('/topic/messages', function (messageOutput) {
+                showMessage(JSON.parse(messageOutput.body));
+            });
+        });
+
+        function sendMessage() {
+            var messageContent = document.getElementById("messageInput").value;
+            stompClient.send("/app/send", {}, JSON.stringify({ 'content': messageContent, 'sender': 'User' }));
+            document.getElementById("messageInput").value = '';
+        }
+
+        function showMessage(message) {
+            var messageDiv = document.createElement("div");
+            messageDiv.appendChild(document.createTextNode(message.sender + ": " + message.content));
+            document.getElementById("chatMessages").appendChild(messageDiv);
+        }
+    </script>
+</body>
+</html>
